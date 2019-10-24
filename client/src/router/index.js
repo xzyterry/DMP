@@ -38,18 +38,7 @@ export const constantRoutes = [
     component: () => import('@/views/error-page/401'),
     hidden: true
   },
-  {
-    path: '/',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        component: () => import('@/views/publish/index'),
-        name: '发布平台',
-        meta: { title: '发布平台', icon: 'guide' }
-      }
-    ]
-  }, {
+ {
     path: '/tb/create',
     component: Layout,
     children: [
@@ -61,7 +50,7 @@ export const constantRoutes = [
       }
     ]
   }, {
-    path: '/tb/list',
+    path: '/',
     component: Layout,
     children: [
       {

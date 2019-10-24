@@ -2,24 +2,38 @@
   <el-row class="list-container">
     <el-col class="list-left" :span="4">
       <el-card class="list-card">
-        <el-tree :data="data" :props="defaultProps" @node-click="handleNodeClick" />
+        <el-tree :data="tbTree" :props="defaultProps" @node-click="handleNodeClick" />
       </el-card>
     </el-col>
     <el-col class="list-content" :span="19">
       <el-row class="list-header">
         <el-card class="list-card">
           <el-col :span="10" style="margin:2px;5px;">
-            <el-row><h1>student</h1></el-row>
-            <el-row><strong>tb_id: jkl34534533535</strong></el-row>
+            <el-row><h1>{{ tbDetail.tb_name }}</h1></el-row>
+            <el-row><strong>tb_id: {{ tbDetail.tb_id }}</strong></el-row>
           </el-col>
           <el-col :span="10" style="margin-top: 3%;">
-            <el-row class="list-font">创建时间: 2019-10-23 19:34:42</el-row>
-            <el-row class="list-font">修改时间: 2019-10-23 19:34:42</el-row>
-            <el-row class="list-font">数据数量: 19890</el-row>
+            <el-row class="list-font">创建时间: {{ tbDetail.tb_create_time }}</el-row>
+            <el-row class="list-font">修改时间: {{ tbDetail.tb_modified_time }}</el-row>
+            <el-row class="list-font">数据数量: {{ tbDetail.total_cnt }}</el-row>
           </el-col>
           <el-col :span="3" style="margin-top: 3%;">
-            <el-button type="primary" icon="el-icon-plus" round>创建合表</el-button>
+            <el-button type="primary" icon="el-icon-plus" circle @click="showChooose = true" />
           </el-col>
+          <el-dialog
+            title="选择功能"
+            :visible.sync="showChooose"
+            width="30%"
+            left
+          >
+            <el-row>
+              <el-col>
+                <el-button class="fun">上传数据</el-button>
+                <el-button class="fun" @click="createTb">创建合表</el-button>
+              </el-col>
+            </el-row>
+
+          </el-dialog>
         </el-card>
       </el-row>
       <el-row class="list-data">
@@ -34,20 +48,17 @@
                       border
                       style="width: 100%"
                     >
-                      <el-table-column
-                        prop="date"
-                        label="日期"
-                        width="180"
-                      />
-                      <el-table-column
-                        prop="name"
-                        label="姓名"
-                        width="180"
-                      />
-                      <el-table-column
-                        prop="address"
-                        label="地址"
-                      />
+                      <template v-for="(col) in tbDetail.tb_fields">
+                        <el-table-column
+                          :key="col.col_name"
+                          sortable
+                          :show-overflow-tooltip="true"
+                          :prop="col.col_name"
+                          :label="col.col_name"
+                          width="124px"
+                        />
+                      </template>
+
                     </el-table>
                   </el-card>
                 </el-row>
@@ -62,7 +73,7 @@
                     </div>
                     <div class="text item">
                       <el-input
-                        v-model="textarea"
+                        v-model="tbDetail.tb_sql"
                         disabled
                         type="textarea"
                         :rows="18"
@@ -118,40 +129,67 @@
   padding: 5px 10px;
   margin-left: 10px;
 }
+.fun{
+  width:10em;
+  height:10em;
+  background-color:bisque;
+  color: white
+}
 </style>
 
 <script>
+
+import { fetchList, fetchTbDetail } from '@/api/tb.js'
+
 export default {
   data() {
     return {
+      showChooose: false,
+      tbList: [],
       activeName: 'first',
-      data: [{
-          label: '一级 1',
-          children: [{
-            label: '二级 1-1',
-            children: [{
-              label: '三级 1-1-1'
-            }]
-          }]
-        }],
-        tableData: [{
-          date: '2016-05-02',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1518 弄'
-        }, {
-          date: '2016-05-04',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1517 弄'
-        }, {
-          date: '2016-05-01',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1519 弄'
-        }, {
-          date: '2016-05-03',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1516 弄'
-        }]
+      tbTree: [],
+      tableData: [],
+      defaultProps: {
+        children: 'children',
+        label: 'label'
+      },
+      tbDetail: {}
     }
+  },
+  mounted() {
+    // 加载合表列表
+    fetchList().then(resolve => {
+        this.tbList = resolve.result
+        if (this.tbList.length > 0) {
+          var tb_id = this.tbList[0].tbId
+          fetchTbDetail({ tb_id }).then(resolve => {
+            this.tbDetail = resolve.result
+            this.tableData = this.tbDetail.data
+          })
+        }
+        const c = this.tbList.map(item => {
+          return {
+            id: item.tbId,
+            label: item.tbName
+          }
+        })
+        this.tbTree = [{ label: '列表', children: c }]
+    }).catch(err => {
+      console.log(err)
+    })
+
+    // 加载第一个合表的信息
+  },
+  methods: {
+     handleClick(tab, event) {
+        console.log(tab, event)
+      },
+      handleNodeClick(event) {
+        console.log(event)
+      },
+      createTb() {
+        this.$router.push({ path: '/tb/create/index' })
+      }
   }
 }
 </script>
